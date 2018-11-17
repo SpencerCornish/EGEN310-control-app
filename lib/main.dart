@@ -1,66 +1,77 @@
-import 'package:flutter/material.dart';
-import 'package:dartis/dartis.dart' as redis;
+import 'dart:async';
 
-void main() => runApp(new MyApp());
+import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
+
+import './serverClient.dart';
+import './landing.dart';
+
+void main() {
+  Logger.root.level = Level.INFO;
+  Logger.root.onRecord.listen((LogRecord record) {
+    print('${record.time} ${record.level.name} ${record.loggerName} ${record.message}');
+  });
+  debugPaintSizeEnabled = true;
+
+  runApp(new MyApp());
+}
 
 class MyApp extends StatelessWidget {
+  final client = new ServerClient(log: Logger.root);
   // This widget is the root
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setEnabledSystemUIOverlays([]);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return new MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Car Controller!',
       theme: new ThemeData(
-        primarySwatch: Colors.blue,
+        accentColor: Colors.deepPurpleAccent,
+        brightness: Brightness.dark,
+        primarySwatch: Colors.deepPurple,
       ),
-      home: new MyHomePage(title: 'Hello Susan'),
+      home: new MyHomePage(
+        client: client,
+      ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
-  redis.Client client;
-  redis.Commands<String, String> conn;
-  _init() async {
-    //client = await redis.Client.connect("redis://192.168.4.1:6379");
-    //conn = client.asCommands<String, String>();
-  }
+  MyHomePage({Key key, this.client}) : super(key: key);
+  final ServerClient client;
 
   @override
   _MyHomePageState createState() {
-    _init();
     return new _MyHomePageState();
   }
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  StreamSubscription serverSub;
+  @override
+  initState() {
+    serverSub = widget.client.onChange.stream.listen((_) => setState(() {}));
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      appBar: new AppBar(
-        title: new Text(widget.title),
-      ),
       body: new Center(
         widthFactor: 1.0,
-        child: new Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            new TextField(
-              maxLength: 10,
-              maxLines: 1,
-              onChanged: _onTextChanged,
-            )
-          ],
+        child: Landing(
+          client: widget.client,
         ),
       ),
     );
   }
 
-  _onTextChanged(String text) async {
-    bool success = await widget.conn.set('disp.text', text);
-    print(success);
+  @override
+  dispose() {
+    serverSub.cancel();
+    super.dispose();
   }
 }
