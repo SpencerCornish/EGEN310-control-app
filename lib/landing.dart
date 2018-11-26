@@ -27,6 +27,12 @@ class _LandingState extends State<Landing> {
   }
 
   @override
+  void dispose() {
+    serverSub.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return new Scaffold(
       body: new Container(
@@ -106,6 +112,28 @@ class _LandingState extends State<Landing> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Column(
+                  children: <Widget>[
+                    RaisedButton(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Row(
+                        children: <Widget>[
+                          Text("Demo Mode"),
+                        ],
+                      ),
+                      onPressed: _onDemoPress,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -143,16 +171,29 @@ class _LandingState extends State<Landing> {
         ],
       );
 
+  _onDemoPress() {
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Controls(client: widget.client)));
+  }
+
   _onConnectPress() async {
     setState(() {
       connectButtonDisabled = true;
     });
     bool connected = await widget.client.initialize(null);
-
-    connected
-        ? Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Controls(client: widget.client)))
-        : setState(() {
-            connectButtonDisabled = false;
-          });
+    if (!connected) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text(
+          "Failed to connect! Try again",
+        ),
+        backgroundColor: Colors.deepOrange,
+        duration: Duration(seconds: 4),
+      ));
+      setState(() {
+        connectButtonDisabled = false;
+      });
+    } else {
+      // Move on if the init was successful
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Controls(client: widget.client)));
+    }
   }
 }

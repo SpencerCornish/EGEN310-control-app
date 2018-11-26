@@ -3,17 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/rendering.dart';
 
 import './serverClient.dart';
 import './landing.dart';
 
 void main() {
-  Logger.root.level = Level.INFO;
+  Logger.root.level = Level.FINE;
   Logger.root.onRecord.listen((LogRecord record) {
     print('${record.time} ${record.level.name} ${record.loggerName} ${record.message}');
   });
-  debugPaintSizeEnabled = true;
 
   runApp(new MyApp());
 }
