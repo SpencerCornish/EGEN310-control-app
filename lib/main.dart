@@ -8,6 +8,7 @@ import './serverClient.dart';
 import './landing.dart';
 
 void main() {
+  // Produce logging output for debug. This only goes to the console
   Logger.root.level = Level.FINE;
   Logger.root.onRecord.listen((LogRecord record) {
     print('${record.time} ${record.level.name} ${record.loggerName} ${record.message}');
@@ -17,14 +18,16 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  // Create a new instance of the server connection. It isn't connected until init is called
   final client = new ServerClient(log: Logger.root);
+
   // This widget is the root
   @override
   Widget build(BuildContext context) {
     SystemChrome.setEnabledSystemUIOverlays([]);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return new MaterialApp(
-      title: 'Car Controller!',
+      title: 'Car Controller',
       theme: new ThemeData(
         accentColor: Colors.deepPurpleAccent,
         brightness: Brightness.dark,

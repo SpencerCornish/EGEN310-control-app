@@ -17,7 +17,11 @@ class Landing extends StatefulWidget {
 }
 
 class _LandingState extends State<Landing> {
+  // Determines whether or not our connect button should be disabled
   bool connectButtonDisabled;
+
+  // This subscribes us to the datasource container
+  // When this fires, a rerender of the UI is triggered
   StreamSubscription serverSub;
 
   @override
@@ -41,6 +45,7 @@ class _LandingState extends State<Landing> {
     );
   }
 
+  // Renders the homepage, used to connect to the car
   _renderSetupScreen() => Column(
         children: [
           new Padding(
@@ -49,7 +54,8 @@ class _LandingState extends State<Landing> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 GestureDetector(
-                  onDoubleTap: () => print("yee"),
+                  // Double tapping the cats logo will skip connecting to the car, and will route to the controls for debugging
+                  onDoubleTap: () => _onDemoPress,
                   child: new Image(
                     image: new AssetImage("assets/main_logo.png"),
                     fit: BoxFit.cover,
@@ -112,28 +118,6 @@ class _LandingState extends State<Landing> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Column(
-                  children: <Widget>[
-                    RaisedButton(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Row(
-                        children: <Widget>[
-                          Text("Demo Mode"),
-                        ],
-                      ),
-                      onPressed: _onDemoPress,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -171,15 +155,22 @@ class _LandingState extends State<Landing> {
         ],
       );
 
+  // Ignore connecting to the car, and just switch to the controls. Used for demoing and debugging
   _onDemoPress() {
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Controls(client: widget.client)));
   }
 
+  // Begin the process of connecting to the car
   _onConnectPress() async {
+    // Disable the connect button
     setState(() {
       connectButtonDisabled = true;
     });
+
+    // Tell the serverClient to connect
     bool connected = await widget.client.initialize(null);
+
+    // If we didn't connect, show an error, and reenable the connect button
     if (!connected) {
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text(
@@ -192,7 +183,7 @@ class _LandingState extends State<Landing> {
         connectButtonDisabled = false;
       });
     } else {
-      // Move on if the init was successful
+      // navigate to the car controls if the connection to the car was successful
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Controls(client: widget.client)));
     }
   }

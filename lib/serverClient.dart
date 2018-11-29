@@ -16,6 +16,7 @@ class RKey {
   static const temp = "tele.temp";
 }
 
+// The nominal pulse timings for the car, in hz
 class MotorConstants {
   static const FRONT_IDLE = 1300;
   static const FRONT_MAX = 1500;
@@ -124,13 +125,8 @@ class ServerClient {
   }
 
   Future<bool> initialize(String ipToConnect) async {
+    // This is always going to be our Redis address, since it is also the gateway for the network
     ipToConnect = "redis://192.168.4.1:6379";
-
-    // await WiFiForIoTPlugin.loadWifiList();
-    // bool didConnect = await WiFiForIoTPlugin.findAndConnect("rpi-car2", password: "TokyoEngineCake!!");
-    // if (!didConnect) {
-    //   return false;
-    // }
 
     try {
       _client = await redis.Client.connect(ipToConnect);
@@ -149,15 +145,18 @@ class ServerClient {
     return true;
   }
 
+  // Give the car some safe starting values
   _setInitialData() async {
     _conn.set(RKey.frontMotor, "$_frontMotorSpeed");
     _conn.set(RKey.rearMotor, "$_rearMotorSpeed");
     _conn.set(RKey.steering, "$_steerAngle");
   }
 
+  // Start the timer for the heartbeat and collecting the telemetery
   Timer _beginHeartbeat() => Timer.periodic(Duration(milliseconds: 500), _sendHeartbeat);
   Timer _beginTelemetryCollection() => Timer.periodic(Duration(milliseconds: 450), _getTelemetryData);
 
+  // The heartbeat expires and is purged after 600ms, so if the phone doesn't set this before expiration, the car will stop
   _sendHeartbeat(Timer t) => _conn.set(RKey.heartbeat, "1", milliseconds: 600);
 
   _getTelemetryData(Timer t) async {
@@ -181,6 +180,7 @@ class ServerClient {
     log.fine("updated all telemetry in ${DateTime.now().difference(startTime).inMilliseconds}ms");
   }
 
+  // Set the speed on the car from a percentage
   setSpeedPercent(double percent) async {
     // Make sure that the motor percent has changed
     if (_motorSpeedPercent != percent) {
@@ -202,6 +202,7 @@ class ServerClient {
     }
   }
 
+  // Set the steering angle on the car from a percentage (-100% - +100%)
   setSteeringPercent(double percent) async {
     // Make sure that the motor percent has changed
     if (_steerPercent != percent) {
@@ -221,6 +222,7 @@ class ServerClient {
     }
   }
 
+  // Set the offset of turning, useful for adjusting the center of the car
   setSteeringOffset(int offset) async {
     if (_steerOffset != offset) {
       setSteeringPercent(0);
