@@ -151,6 +151,7 @@ class _ControlsState extends State<Controls> {
 
   // Records the initial point of contact by a dragging finger
   _startDrag(DragStartDetails details) {
+    // Trigger UI update
     setState(() {
       dragStartOffset = details.globalPosition;
     });
@@ -162,15 +163,21 @@ class _ControlsState extends State<Controls> {
         ((details.globalPosition.dx - dragStartOffset.dx) / MediaQuery.of(context).size.width) * 2;
     double newPercentExpandedY = ((details.globalPosition.dy - dragStartOffset.dy) / drivingSurfaceHeight) * 2;
 
+    // send the data to the translator class, to be packaged and sent to the car
     widget.client.setSteeringPercent(newPercentExpandedX);
     widget.client.setSpeedPercent(newPercentExpandedY * -1);
+
+    // Trigger UI update
     setState(() {});
   }
 
   // Resets when the finger leaves the screen
   _endDrag(DragEndDetails details) {
+    // Stop the car
     widget.client.setSpeedPercent(0);
     widget.client.setSteeringPercent(0);
+
+    // Trigger UI update
     setState(() {
       dragStartOffset = Offset(0, 0);
     });

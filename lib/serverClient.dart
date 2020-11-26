@@ -129,6 +129,7 @@ class ServerClient {
     ipToConnect = "redis://192.168.4.1:6379";
 
     try {
+      // Store a ref to the connections
       _client = await redis.Client.connect(ipToConnect);
       _conn = _client.asCommands<String, String>();
     } catch (e) {
@@ -138,8 +139,14 @@ class ServerClient {
 
     _isConnected = true;
 
+    // Set our safe values for the motors, just to be safe
     _setInitialData();
+
+    // Start the app connection heartbeat, the car expects this, so
+    // if a disconnect occurs, the car will emergency stop.
     _beginHeartbeat();
+
+    // Start polling for the gyroscope values
     _beginTelemetryCollection();
 
     return true;
@@ -184,20 +191,24 @@ class ServerClient {
   setSpeedPercent(double percent) async {
     // Make sure that the motor percent has changed
     if (_motorSpeedPercent != percent) {
-      // If we should go forward
       double frontSpeedValue;
 
       if (!percent.isNegative) {
+        // If we should go forward
         frontSpeedValue =
             ((MotorConstants.FRONT_MAX - MotorConstants.FRONT_IDLE) * percent) + MotorConstants.FRONT_IDLE;
-
-        // Or if we should reverse
       } else {
+        // Or if we should reverse
         frontSpeedValue =
             ((MotorConstants.FRONT_IDLE - MotorConstants.FRONT_REV) * (1 - percent.abs())) + MotorConstants.FRONT_REV;
       }
+      // Round off the crazy number
       _frontMotorSpeed = frontSpeedValue.round();
+
+      // Tell the datastore about this value
       _conn.set(RKey.frontMotor, frontSpeedValue.round().toString());
+
+      // Trigger a UI update
       onChange.add(null);
     }
   }
